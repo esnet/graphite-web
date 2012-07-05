@@ -159,6 +159,11 @@ if not STANDARD_DIRS:
   except ImportError:
     pass
 
+FINDERS = [
+  ('CeresFinder', 'settings.CERES_DIR'),
+  ('StandardFinder', 'settings.STANDARD_DIRS'),
+]
+
 # Default sqlite db file
 # This is set here so that a user-set STORAGE_DIR is available
 if 'sqlite3' in DATABASE_ENGINE \

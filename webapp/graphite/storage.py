@@ -145,10 +145,25 @@ class FindQuery:
 
     return '<FindQuery: %s from %s until %s>' % (self.pattern, startString, endString)
 
-
 # Exposed Storage API
-finders = [
-  CeresFinder(settings.CERES_DIR),
-  StandardFinder(settings.STANDARD_DIRS),
-]
-STORE = Store(finders, hosts=settings.CLUSTER_SERVERS)
+def load_finders(finder_list):
+  """Create the list of finders the Graphite Store will query.
+
+  finder_list is a list of tuples, each tuple contains the name of a class and
+  the single argument to initialize that class with.  If the class name contains
+  a . the class will be imported from that module.  If the class name does not
+  contain a . it will use the namespace built in store.py.
+  """
+
+  finders = []
+  for klass_name, arg_name in finder_list:
+    if '.' in klass_name:
+      mod, klass_name = klass_name.rsplit('.', 1)
+      tmp = __import__(mod, fromlist=[klass_name])
+      finders.append(eval('tmp.%s(%s)' % (klass_name, arg_name)))
+    else:
+      finders.append(eval('%s(%s)' % (klass_name, arg_name)))
+
+  return finders
+
+STORE = Store(load_finders(settings.FINDERS), hosts=settings.CLUSTER_SERVERS)
