@@ -253,9 +253,15 @@ def tree_json(nodes, base_path, wildcards=False):
       continue
 
     found.add(node.name)
+
+    if hasattr(node, 'label'):
+      text = str(node.label)
+    else:
+      text = str(node.name)
+
     resultNode = {
-      'text' : str(node.name),
-      'id' : base_path + str(node.name),
+      'text' : text,
+      'id' : node.metric_path,
     }
 
     if node.is_leaf:
