@@ -101,7 +101,7 @@ def find_view(request):
 
   try:
     matches = list( STORE.find(query, fromTime, untilTime, local=local_only,
-        requst=request) )
+        request=request) )
   except:
     log.exception()
     raise
