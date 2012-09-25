@@ -16,7 +16,8 @@ class Store:
     self.remote_stores = [ RemoteStore(host) for host in remote_hosts ]
 
 
-  def find(self, pattern, startTime=None, endTime=None, local=False):
+  def find(self, pattern, startTime=None, endTime=None, local=False,
+          request=None):
     query = FindQuery(pattern, startTime, endTime)
 
     # Start remote searches
@@ -27,7 +28,7 @@ class Store:
 
     # Search locally
     for finder in self.finders:
-      for node in finder.find_nodes(query):
+      for node in finder.find_nodes(query, request=request):
         #log.info("find() :: local :: %s" % node)
         matching_nodes.add(node)
 

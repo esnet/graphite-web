@@ -32,7 +32,7 @@ def completeHistory(path, profile):
   html += "</ul>"
   return html
 
-def completePath(path, shortnames=False):
+def completePath(path, shortnames=False, request=None):
   # Have to extract the path expression from the command
   for prefix in ('draw ','add ','remove '):
     if path.startswith(prefix):
@@ -43,7 +43,7 @@ def completePath(path, shortnames=False):
 
   results = []
   
-  for node in STORE.find(pattern):
+  for node in STORE.find(pattern, request=request):
     if shortnames:
       results.append(node.name)
     else:

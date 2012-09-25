@@ -33,7 +33,7 @@ def autocomplete(request):
     profile = getProfile(request)
     html = completer.completeHistory(path, profile)
   else:
-    html = completer.completePath(path, shortnames=shortnames)
+    html = completer.completePath(path, shortnames=shortnames, request=request)
 
   return HttpResponse( html )
 

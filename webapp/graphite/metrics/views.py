@@ -100,7 +100,8 @@ def find_view(request):
       query = '.'.join(query_parts)
 
   try:
-    matches = list( STORE.find(query, fromTime, untilTime, local=local_only) )
+    matches = list( STORE.find(query, fromTime, untilTime, local=local_only,
+        requst=request) )
   except:
     log.exception()
     raise
@@ -149,7 +150,7 @@ def expand_view(request):
   results = {}
   for query in request.REQUEST.getlist('query'):
     results[query] = set()
-    for node in STORE.find(query, local=local_only):
+    for node in STORE.find(query, local=local_only, request=request):
       if node.is_leaf or not leaves_only:
         results[query].add( node.metric_path )
 

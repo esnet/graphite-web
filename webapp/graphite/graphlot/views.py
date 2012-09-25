@@ -63,7 +63,7 @@ def find_metric(request):
         return HttpResponseBadRequest(
             content="Missing required parameter 'q'", mimetype="text/plain")
 
-    matches = list( STORE.find(query+"*") )
+    matches = list( STORE.find(query+"*", request=request) )
     content = "\n".join([node.metric_path for node in matches ])
     response = HttpResponse(content, mimetype='text/plain')
 
