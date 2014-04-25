@@ -109,7 +109,7 @@ RRD_DIR
   `Default: /opt/graphite/storage/rrd`
   The location of RRD data files
 
-DATA_DIRS
+STANDARD_DIRS
   `Default: [WHISPER_DIR, RRD_DIR]`
   The list of directories searched for data files. By default, this is the value of WHISPER_DIR
   and RRD_DIR (if rrd support is detected). If this setting is defined, the WHISPER_DIR and RRD_DIR
@@ -128,7 +128,7 @@ INDEX_FILE
 Email Configuration
 -------------------
 These settings configure Django's email functionality which is used for emailing rendered graphs.
-See the `Django documentation <https://docs.djangoproject.com/en/dev/topics/email/>`_ for
+See the `Django documentation <https://docs.djangoproject.com/en/dev/topics/email/>`__ for
 further detail on these settings
 
 EMAIL_BACKEND
@@ -178,12 +178,12 @@ USE_LDAP_AUTH
 LDAP_SERVER
   `Default: ''`
 
-  Set the LDAP server here or alternativly in ``LDAP_URL``
+  Set the LDAP server here or alternativly in ``LDAP_URI``
 
 LDAP_PORT
   `Default: 389`
 
-  Set the LDAP server port here or alternativly in ``LDAP_URL``
+  Set the LDAP server port here or alternativly in ``LDAP_URI``
 
 LDAP_URI
   `Default: None`
@@ -214,11 +214,11 @@ LDAP_USER_QUERY
 
 Other Authentications
 ^^^^^^^^^^^^^^^^^^^^^
-REMOTE_USER_AUTHENTICATION
+USE_REMOTE_USER_AUTHENTICATION
   `Default: False`
 
   Enables the use of the Django `RemoteUserBackend` authentication backend. See the
-  `Django documentation <https://docs.djangoproject.com/en/dev/howto/auth-remote-user/>`_ for
+  `Django documentation <https://docs.djangoproject.com/en/dev/howto/auth-remote-user/>`__ for
   further details
 
 LOGIN_URL
@@ -228,6 +228,36 @@ LOGIN_URL
   for directing users to an external authentication link such as for Remote User authentication
   or a backend such as `django_openid_auth <https://launchpad.net/django-openid-auth>`_
 
+Dashboard Authorization Configuration
+-------------------------------------
+These settings control who is allowed to save and delete dashboards.  By default anyone
+can perform these actions, but by setting DASHBOARD_REQUIRE_AUTHENTICATION, users must at
+least be logged in to do so.  The other two settings allow further restriction of who is
+able to perform these actions. Users who are not suitably authorized will still be able to
+use and change dashboards, but will not be able to save changes or delete dashboards.
+
+DASHBOARD_REQUIRE_AUTHENTICATION
+  `Default: False`
+
+  If set to True, dashboards can only be saved and deleted by logged in users.
+
+DASHBOARD_REQUIRE_EDIT_GROUP
+  `Default: None`
+
+  If set to the name of a user group, dashboards can only be saved and deleted by logged-in users
+  who are members of this group.  Groups can be set in the Django Admin app, or in LDAP.
+
+  Note that DASHBOARD_REQUIRE_AUTHENTICATION must be set to true - if not, this setting is ignored.
+
+DASHBOARD_REQUIRE_PERMISSIONS
+  `Default: False`
+
+  If set to True, dashboards can only be saved or deleted by users having the appropriate
+  (change or delete) permission (as set in the Django Admin app). These permissions can be set at
+  the user or group level.  Note that Django's 'add' permission is not used.
+  
+  Note that DASHBOARD_REQUIRE_AUTHENTICATION must be set to true - if not, this setting is ignored.
+
 Database Configuration
 ----------------------
 The following configures the Django database settings. Graphite uses the database for storing user
@@ -236,20 +266,18 @@ at ``STORAGE_DIR/graphite.db`` by default. If running multiple Graphite-web inst
 such as PostgreSQL or MySQL is required so that all instances may share the same data source.
 
 .. note ::
-  As of Django 1.2, the database configuration is specified by the DATABASES dictionary.
-  For compatibility with Django 1.1, Graphite's default Sqlite database configuration still uses the
-  old method. This means that users running under Django 1.4 will not have a working default.
-  In any case, it is recommended that all users on Django 1.2 or above explicitly specify a database
-  configuration using the new format
+  As of Django 1.2, the database configuration is specified by the DATABASES
+  dictionary instead of the old ``DATABASE_*`` format. Users must use the new
+  specification to have a working database.
 
 See the
 `Django documentation <https://docs.djangoproject.com/en/dev/ref/settings/#databases>`_
-for full documentation of the DATABASE setting. Users on Django 1.1 will require setting the 
-deprecated ``DATABASE_*`` settings outlined in the `Django 1.1 documentation <https://docs.djangoproject.com/en/1.1/ref/settings/#database-engine>`_
+for full documentation of the DATABASE setting.
 
 .. note ::
-   Remember, setting up a new database requires running ``manage.py syncdb`` to create the initial
-   schema
+   Remember, setting up a new database requires running
+   ``PYTHONPATH=$GRAPHITE_ROOT/webapp django-admin.py syncdb --settings=graphite.settings``
+   to create the initial schema.
 
 Cluster Configuration
 ---------------------

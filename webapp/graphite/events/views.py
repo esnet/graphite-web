@@ -1,9 +1,9 @@
 import datetime
 import time
 
-from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
-
+from django.utils.timezone import localtime, now
+from graphite.compat import HttpResponse
 from graphite.util import json
 from graphite.events import models
 from graphite.render.attime import parseATTime
@@ -41,7 +41,7 @@ def detail(request, event_id):
 
 def post_event(request):
     if request.method == 'POST':
-        event = json.loads(request.raw_post_data)
+        event = json.loads(request.body)
         assert isinstance(event, dict)
 
         values = {}
@@ -60,19 +60,28 @@ def post_event(request):
         return HttpResponse(status=405)
 
 def get_data(request):
-    return HttpResponse(json.dumps(fetch(request), cls=EventEncoder),
-                        mimetype="application/json")
+    if 'jsonp' in request.REQUEST:
+        response = HttpResponse(
+          "%s(%s)" % (request.REQUEST.get('jsonp'), 
+              json.dumps(fetch(request), cls=EventEncoder)),
+          content_type='text/javascript')
+    else:
+        response = HttpResponse(
+            json.dumps(fetch(request), cls=EventEncoder),
+            content_type="application/json")
+    return response
 
 def fetch(request):
+    #XXX we need to move to USE_TZ=True to get rid of localtime() conversions
     if request.GET.get("from", None) is not None:
-        time_from = parseATTime(request.GET["from"])
+        time_from = localtime(parseATTime(request.GET["from"])).replace(tzinfo=None)
     else:
         time_from = datetime.datetime.fromtimestamp(0)
 
     if request.GET.get("until", None) is not None:
-        time_until = parseATTime(request.GET["until"])
+        time_until = localtime(parseATTime(request.GET["until"])).replace(tzinfo=None)
     else:
-        time_until = datetime.datetime.now()
+        time_until = now()
 
     tags = request.GET.get("tags", None)
     if tags is not None:

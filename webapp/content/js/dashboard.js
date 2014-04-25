@@ -17,6 +17,7 @@ var refreshTask;
 var spacer;
 var justClosedGraph = false;
 var NOT_EDITABLE = ['from', 'until', 'width', 'height', 'target', 'uniq', '_uniq'];
+var editor = null;
 
 var cookieProvider = new Ext.state.CookieProvider({
   path: "/dashboard"
@@ -114,6 +115,18 @@ if (sessionDefaultParamsJson && sessionDefaultParamsJson.length > 0) {
   defaultGraphParams = Ext.apply({}, originalDefaultGraphParams);
 }
 
+function isLoggedIn() {
+  return userName != null;
+}
+
+function hasPermission(permission) {
+  for (i in permissions) {
+    if (permissions[i] === permission) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function initDashboard () {
 
@@ -509,6 +522,7 @@ function initDashboard () {
     text: getTimeText()
   };
 
+  // Note that some of these items are changed in postLoginMenuAdjust() after login/logout
   var dashboardMenu = {
     text: 'Dashboard',
     menu: {
@@ -526,18 +540,40 @@ function initDashboard () {
           text: "Finder",
           handler: showDashboardFinder
         }, {
+          text: "Template Finder",
+          handler: showTemplateFinder
+        }, {
+          text: "Save As Template",
+          handler: saveTemplate,
+          disabled: !hasPermission('change')
+        }, {
           id: 'dashboard-save-button',
           text: "Save",
           handler: function (item, e) {
                      sendSaveRequest(dashboardName);
                    },
-          disabled: (dashboardName == null) ? true : false
+          disabled: dashboardName == null || !hasPermission('change')
         }, {
+          id: "dashboard-save-as-button",
           text: "Save As",
-          handler: saveDashboard
+          handler: saveDashboard,
+          disabled: !hasPermission('change')
         }, {
           text: "Configure UI",
           handler: configureUI
+        }, {
+          text: "Edit Dashboard",
+          handler: editDashboard
+        }, {
+          id: "dashboard-login-button",
+          text: getLoginMenuItemText(),
+          handler: function (item, e) {
+                     if (isLoggedIn()) {
+                       logout();
+                     } else {
+                       showLoginForm();
+                     }
+                   }
         }
       ]
     }
@@ -558,7 +594,7 @@ function initDashboard () {
               },
               { text: "From Saved Graph",
                 handler: newFromSavedGraph
-              },
+              }
             ]
           }
         },
@@ -718,7 +754,12 @@ function initDashboard () {
 
   if(window.location.hash != '')
   {
-    sendLoadRequest(window.location.hash.substr(1));
+    if (window.location.hash.indexOf("/") != -1) {
+      var name_val = window.location.hash.substr(1).split('#');
+      sendLoadTemplateRequest(name_val[0],name_val[1]);
+    } else {
+      sendLoadRequest(window.location.hash.substr(1));
+    }
   }
 
   if (initialError) {
@@ -946,7 +987,7 @@ function graphAreaToggle(target, options) {
 }
 
 function importGraphUrl(targetUrl, options) {
-  var fullUrl = decodeURIComponent(targetUrl).replace(/#/,'%23');
+  var fullUrl = targetUrl;
   var i = fullUrl.indexOf("?");
   if (i == -1) {
     return;
@@ -1086,7 +1127,7 @@ var TimeRange = {
 function getTimeText() {
   if (TimeRange.type == 'relative') {
     var text = "Now showing the past " + TimeRange.relativeStartQuantity + " " + TimeRange.relativeStartUnits;
-    if (TimeRange.relativeUntilUnits != 'now') {
+    if (TimeRange.relativeUntilUnits !== 'now' && TimeRange.relativeUntilUnits !== '') {
       text = text + " until " + TimeRange.relativeUntilQuantity + " " + TimeRange.relativeUntilUnits + " ago";
     }
     return text;
@@ -1365,7 +1406,7 @@ function newFromSavedGraph() {
   function handleSelects(selModel, nodes) {
     Ext.each(nodes, function (node, index) {
       if (!node.leaf) {
-	node.unselect();
+        node.unselect();
         node.toggle();
       }
     });
@@ -1970,29 +2011,28 @@ function breakoutGraph(record) {
 }
 
 function mailGraph(record) {
-  mygraphParams = record.get('params');
-  mygraphParams['target'] = record.data['target'];
-  newparams = Ext.encode(Ext.apply(mygraphParams, defaultGraphParams));
+  var mygraphParams = record.get('params');
+  var newparams = Ext.encode(Ext.apply(mygraphParams, defaultGraphParams));
 
   var fromField = new Ext.form.TextField({
     fieldLabel: "From",
     name: 'sender',
     width: 300,
-    allowBlank: false,
+    allowBlank: false
   });
 
   var toField = new Ext.form.TextField({
     fieldLabel: "To",
     name: 'recipients',
     width: 300,
-    allowBlank: false,
+    allowBlank: false
   });
 
   var subjectField = new Ext.form.TextField({
     fieldLabel: "Subject",
     name: 'subject',
     width: 300,
-    allowBlank: false,
+    allowBlank: false
   });
 
   var msgField = new Ext.form.TextArea({
@@ -2041,7 +2081,7 @@ function mailGraph(record) {
     resizable: true,
     modal: true,
     layout: 'fit',
-    items: [contactForm],
+    items: [contactForm]
   });
   win.show();
 }
@@ -2214,6 +2254,78 @@ var keyMap = new Ext.KeyMap(document, keyMapConfigs);
 
 
 /* Dashboard functions */
+function editDashboard() {
+  var edit_dashboard_win = new Ext.Window({
+    title: "Edit Dashboard",
+    id: 'editor-window',
+    width: 700,
+    height: 500,
+    layout: 'vbox',
+    layoutConfig: {align: 'stretch', pack: 'start'},
+    modal: true,
+    items: [
+      {
+        xtype: 'container',
+        flex: 1,
+        id: 'editor',
+        title: 'ace',
+        listeners: { resize: function () { if (editor) editor.resize(); } }
+      }
+    ],
+    listeners: {
+      afterrender: {
+        scope: this,
+        fn: function (obj) { setupEditor(obj.body.dom); getInitialState() }
+      }
+    },
+    buttons: [
+      {text: "Update (doesn't save)", handler: updateAfterEdit},
+      {text: 'Cancel', handler: function () { edit_dashboard_win.close(); } }
+    ]
+  });
+  function updateAfterEdit(btn, target) {
+    var graphString = editor.getSession().getValue();
+    var targets = JSON.parse(graphString);
+    graphStore.removeAll();
+    for (var i = 0; i < targets.length; i++) {
+      var myParams = {};
+      Ext.apply(myParams, targets[i]);
+      var urlParams = {};
+      Ext.apply(urlParams, defaultGraphParams);
+      Ext.apply(urlParams, GraphSize);
+      Ext.apply(urlParams, myParams);
+      var record = new GraphRecord({
+        target: targets[i].target,
+        params: myParams,
+        url: '/render?' + Ext.urlEncode(urlParams)
+      });
+      graphStore.add([record]);
+    }
+    edit_dashboard_win.close();
+  }
+  function getInitialState() {
+    var graphs = [];
+    graphStore.each(function () {
+      var params = {};
+      Ext.apply(params, this.data.params);
+      delete params['from'];
+      delete params['until'];
+      graphs.push(params);
+    });
+    editor.getSession().setValue(JSON.stringify(graphs, null, 2));
+  }
+  function setupEditor(obj) {
+    editor = ace.edit("editor");
+    editor.setTheme("ace/theme/textmate");
+    var JSONMode = require("ace/mode/json").Mode;
+    var session = editor.getSession();
+    session.setMode(new JSONMode());
+    session.setUseSoftTabs(true);
+    session.setTabSize(2);
+  }
+  edit_dashboard_win.show();
+}
+
 function saveDashboard() {
   Ext.Msg.prompt(
     "Save Dashboard",
@@ -2228,6 +2340,66 @@ function saveDashboard() {
     false,
     (dashboardName) ? dashboardName : ""
   );
+}
+
+function saveTemplate() {
+  var nameField = new Ext.form.TextField({
+    id: 'dashboard-save-template-name',
+    fieldLabel: "Template Name",
+    width: 240,
+    allowBlank: false,
+    align: 'center',
+    value: dashboardName ? dashboardName.split('/')[0]: '',
+  });
+
+  var keyField = new Ext.form.TextField({
+    id: 'dashboard-save-template-key',
+    fieldLabel: "String to replace",
+    width: 240,
+    allowBlank: false,
+    align: 'center',
+  });
+
+  var win;
+
+  function save() {
+    sendSaveTemplateRequest(nameField.getValue(), keyField.getValue());
+    win.close();
+  }
+
+  win = new Ext.Window({
+    title: "Save dashboard as a template",
+    width: 400,
+    height: 120,
+    resizable: false,
+    layout: 'form',
+    labelAlign: 'right',
+    labelWidth: 120,
+    items: [nameField,keyField],
+    buttonAlign: 'center',
+    buttons: [
+      {text: 'Ok', handler: save},
+      {text: 'Cancel', handler: function () { win.close(); } }
+    ]
+  });
+  win.show();
+}
+
+function sendSaveTemplateRequest(name, key) {
+  Ext.Ajax.request({
+    url: "/dashboard/save_template/" + name + "/" + key,
+    method: 'POST',
+    params: {
+      state: Ext.encode( getState() )
+    },
+    success: function (response) {
+               var result = Ext.decode(response.responseText);
+               if (result.error) {
+                 Ext.Msg.alert("Error", "There was an error saving this dashboard as a template: " + result.error);
+               }
+             },
+    failure: failedAjaxCall
+  });
 }
 
 function sendSaveRequest(name) {
@@ -2262,6 +2434,28 @@ function sendLoadRequest(name) {
   });
 }
 
+function sendLoadTemplateRequest(name, value) {
+  urlparts = window.location.href.split('#')
+  if(urlparts[0].split('?')[1]) {
+    new_location = urlparts[0].split('?')[0] + '#'+name+'/'+value;
+    window.location.href = new_location;
+  } else {
+    Ext.Ajax.request({
+      url: "/dashboard/load_template/" + name + "/" + value,
+      success: function (response) {
+               var result = Ext.decode(response.responseText);
+               if (result.error) {
+                 Ext.Msg.alert("Error Loading Template", result.error);
+               } else {
+                 applyState(result.state);
+                 navBar.collapse(false);
+               }
+             },
+      failure: failedAjaxCall
+    });
+  }
+}
+
 function getState() {
   var graphs = [];
   graphStore.each(
@@ -2294,15 +2488,17 @@ function applyState(state) {
   //state.timeConfig = {type, quantity, units, untilQuantity, untilUnits, startDate, startTime, endDate, endTime}
   var timeConfig = state.timeConfig
   TimeRange.type = timeConfig.type;
-  TimeRange.relativeStartQuantity = timeConfig.quantity;
-  TimeRange.relativeStartUnits = timeConfig.units;
-  TimeRange.relativeUntilQuantity = timeConfig.untilQuantity;
-  TimeRange.relativeUntilUnits = timeConfig.untilUnits;
+  TimeRange.relativeStartQuantity = timeConfig.relativeStartQuantity;
+  TimeRange.relativeStartUnits = timeConfig.relativeStartUnits;
+  TimeRange.relativeUntilQuantity = timeConfig.relativeUntilQuantity;
+  TimeRange.relativeUntilUnits = timeConfig.relativeUntilUnits;
   TimeRange.startDate = new Date(timeConfig.startDate);
   TimeRange.startTime = timeConfig.startTime;
   TimeRange.endDate = new Date(timeConfig.endDate);
   TimeRange.endTime = timeConfig.endTime;
   updateTimeText();
+
+
 
   //state.refreshConfig = {enabled, interval}
   var refreshConfig = state.refreshConfig;
@@ -2346,11 +2542,26 @@ function deleteDashboard(name) {
   });
 }
 
+function deleteTemplate(name) {
+  Ext.Ajax.request({
+    url: "/dashboard/delete_template/" + name,
+    success: function (response) {
+      var result = Ext.decode(response.responseText);
+      if (result.error) {
+        Ext.Msg.alert("Error", "Failed to delete template '" + name + "': " + result.error);
+      } else {
+        Ext.Msg.alert("Template Deleted", "The " + name + " template was deleted successfully.");
+      }
+    },
+    failure: failedAjaxCall
+  });
+}
+
 function setDashboardName(name) {
   dashboardName = name;
   var saveButton = Ext.getCmp('dashboard-save-button');
 
-  if (name == null) {
+  if (name == null || !hasPermission('change')) {
     dashboardURL = null;
     document.title = "untitled - Graphite Dashboard";
     navBar.setTitle("untitled");
@@ -2458,12 +2669,22 @@ function showDashboardFinder() {
     url: "/dashboard/find/",
     method: 'GET',
     params: {query: "e"},
-    fields: ['name'],
+    fields: [{
+      name: 'name',
+      sortType: function(value) {
+	// Make sorting case-insensitive
+        return value.toLowerCase();
+      }
+    }],
     root: 'dashboards',
+    sortInfo: {
+      field: 'name',
+      direction: 'DESC'
+    },
     listeners: {
       beforeload: function (store) {
                     store.setBaseParam('query', queryField.getValue());
-                  }
+      }
     }
   });
 
@@ -2509,7 +2730,11 @@ function showDashboardFinder() {
                            Ext.getCmp('finder-delete-button').disable();
                          } else {
                            Ext.getCmp('finder-open-button').enable();
-                           Ext.getCmp('finder-delete-button').enable();
+                           if (hasPermission('delete')) {
+                             Ext.getCmp('finder-delete-button').enable();
+                           } else {
+                             Ext.getCmp('finder-delete-button').disable();
+                           }
                          }
                        },
 
@@ -2585,6 +2810,146 @@ function showDashboardFinder() {
   win.show();
 }
 
+// Template Finder
+function showTemplateFinder() {
+  var win;
+  var templatesList;
+  var queryField;
+  var valueField;
+  var templatesStore = new Ext.data.JsonStore({
+    url: "/dashboard/find_template/",
+    method: 'GET',
+    params: {query: "e"},
+    fields: ['name'],
+    root: 'templates',
+    listeners: {
+      beforeload: function (store) {
+                    store.setBaseParam('query', queryField.getValue());
+                  }
+    }
+  });
+
+  function openSelected() {
+    var selected = templatesList.getSelectedRecords();
+    if (selected.length > 0) {
+      sendLoadTemplateRequest(selected[0].data.name, valueField.getValue());
+    }
+    win.close();
+  }
+
+  function deleteSelected() {
+    var selected = templatesList.getSelectedRecords();
+    if (selected.length > 0) {
+      var record = selected[0];
+      var name = record.data.name;
+
+      Ext.Msg.confirm(
+       "Delete Template",
+        "Are you sure you want to delete the " + name + " template?",
+        function (button) {
+          if (button == 'yes') {
+            deleteTemplate(name);
+            templatesStore.remove(record);
+            templatesList.refresh();
+          }
+        }
+      );
+    }
+  }
+
+  templatesList = new Ext.list.ListView({
+    columns: [
+      {header: 'Template', width: 1.0, dataIndex: 'name', sortable: false}
+    ],
+    columnSort: false,
+    emptyText: "No templates found",
+    hideHeaders: true,
+    listeners: {
+      selectionchange: function (listView, selections) {
+                         if (listView.getSelectedRecords().length == 0) {
+                           Ext.getCmp('finder-open-button').disable();
+                           Ext.getCmp('finder-delete-button').disable();
+                         } else {
+                           if (valueField.getValue()) {
+                             Ext.getCmp('finder-open-button').enable();
+                           }
+                           Ext.getCmp('finder-delete-button').enable();
+                         }
+                       },
+
+    },
+    overClass: '',
+    region: 'center',
+    reserveScrollOffset: true,
+    singleSelect: true,
+    store: templatesStore,
+    style: "background-color: white;"
+  });
+
+  var lastQuery = null;
+  var queryUpdateTask = new Ext.util.DelayedTask(
+    function () {
+      var currentQuery = queryField.getValue();
+      if (lastQuery != currentQuery) {
+        templatesStore.load();
+      }
+      lastQuery = currentQuery;
+    }
+  );
+
+  queryField = new Ext.form.TextField({
+    region: 'south',
+    emptyText: "filter template listing",
+    enableKeyEvents: true,
+    listeners: {
+      keyup: function (field, e) {
+                  if (e.getKey() == e.ENTER) {
+                    sendLoadRequest(field.getValue(), reset_params=true);
+                    win.close();
+                  } else {
+                    queryUpdateTask.delay(FINDER_QUERY_DELAY);
+                  }
+                }
+    }
+  });
+
+  valueField = new Ext.form.TextField({
+    region: 'north',
+    emptyText: "Value to use"
+  });
+
+  win = new Ext.Window({
+    title: "Template Finder",
+    width: 400,
+    height: 500,
+    layout: 'border',
+    modal: true,
+    items: [
+      valueField,
+      templatesList,
+      queryField,
+    ],
+    buttons: [
+      {
+        id: 'finder-open-button',
+        text: "Open",
+        disabled: true,
+        handler: openSelected
+      }, {
+        id: 'finder-delete-button',
+        text: "Delete",
+        disabled: true,
+        handler: deleteSelected
+      }, {
+        text: "Close",
+        handler: function () { win.close(); }
+      }
+    ]
+  });
+  templatesStore.load();
+  win.show();
+}
+
 /* Graph Options API (to reuse createOptionsMenu from composer_widgets.js) */
 function updateGraph() {
   refreshGraphs();
@@ -2644,11 +3009,7 @@ function applyFuncToEach(funcName, extraArg) {
         removeTargetFromSelectedGraph(target);
 
         if (extraArg) {
-          if (funcName == 'mostDeviant') { //SPECIAL CASE HACK
-            newTarget = funcName + '(' + extraArg + ',' + target + ')';
-          } else {
-            newTarget = funcName + '(' + target + ',' + extraArg + ')';
-          }
+          newTarget = funcName + '(' + target + ',' + extraArg + ')';
         } else {
           newTarget = funcName + '(' + target + ')';
         }
@@ -2781,3 +3142,102 @@ function map(myArray, myFunc) {
   }
   return results;
 }
+
+function getLoginMenuItemText() {
+  if (isLoggedIn()) {
+    return 'Log Out From "' + userName + '"';
+  } else {
+    return 'Log In';
+  }
+}
+
+/* After login/logout, make any necessary adjustments to Dashboard menu items (text and/or disabled) */
+function postLoginMenuAdjust() {
+  Ext.getCmp("dashboard-login-button").setText(getLoginMenuItemText());
+  Ext.getCmp("dashboard-save-button").setDisabled(dashboardName == null || !hasPermission('change'));
+  Ext.getCmp("dashboard-save-as-button").setDisabled(!hasPermission('change'));
+}
+
+function showLoginForm() {
+  var login = new Ext.FormPanel({
+    labelWidth: 80,
+    frame: true,
+    title: 'Please Login',
+    defaultType: 'textfield',
+    monitorValid: true,
+
+    items: [{
+        fieldLabel: 'Username',
+        name: 'username',
+        allowBlank: false,
+        listeners: {
+          afterrender: function(field) { field.focus(false, 100); }
+        }
+      },{
+        fieldLabel: 'Password',
+        name: 'password',
+        inputType: 'password',
+        allowBlank: false
+      }
+    ],
+    buttons: [
+      {text: 'Login', formBind: true, handler: doLogin},
+      {text: 'Cancel', handler: function () { win.close(); } }
+    ]
+  });
+  
+  function doLogin() {
+    login.getForm().submit({
+      method: 'POST',
+      url: '/dashboard/login',
+      waitMsg: 'Authenticating...',
+      success: function(form, action) {
+        userName = form.findField('username').getValue();
+        permissions = action.result.permissions;
+        postLoginMenuAdjust();
+        win.close();
+      },
+      failure: function(form, action) {
+        if (action.failureType == 'server') {
+          var obj = Ext.util.JSON.decode(action.response.responseText);
+          Ext.Msg.alert('Login Failed!', obj.errors.reason);
+        } else {
+          Ext.Msg.alert('Warning!', 'Authentication server is unreachable : ' + action.response.responseText);
+        }
+        login.getForm().reset();
+      }
+    });
+  }
+
+  var win = new Ext.Window({
+    layout: 'fit',
+    width: 300,
+    height: 150,
+    closable: false,
+    resizable: false,
+    plain: true,
+    border: false,
+    items: [login]
+  });
+  win.show();
+}
+
+function logout() {
+  Ext.Ajax.request({
+    url: '/dashboard/logout',
+    method: 'POST',
+    success: function() {
+      userName = null;
+      permissions = permissionsUnauthenticated;
+      postLoginMenuAdjust();
+    },
+    failure: function() {
+      // Probably because they no longer have a valid session - assume they're now logged out
+      userName = null;
+      permissions = permissionsUnauthenticated;
+      postLoginMenuAdjust();
+    }
+  });
+}
+
+

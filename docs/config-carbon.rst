@@ -97,7 +97,7 @@ Important notes before continuing:
 * ``xFilesFactor`` should be a floating point number between 0 and 1, and specifies what fraction of the previous retention level's slots must have non-null values in order to aggregate to a non-null value.  The default is 0.5.
 * ``aggregationMethod`` specifies the function used to aggregate values for the next retention level.  Legal methods are ``average``, ``sum``, ``min``, ``max``, and ``last``. The default is ``average``.
 * These are set at the time the first metric is sent.
-* Changing this file will not affect .wsp files already created on disk. Use whisper-resize.py to change those.
+* Changing this file will not affect .wsp files already created on disk. Use whisper-set-aggregation-method.py to change those.
 
 Here's an example:
 
@@ -148,6 +148,8 @@ for calculating an aggregate metric. The calculation will occur
 every 'frequency' seconds and the 'method' can specify 'sum' or
 'avg'. The name of the aggregate metric will be derived from
 'output_template' filling in any captured fields from 'input_pattern'.
+Any metric that will arrive to ``carbon-aggregator`` will proceed to its
+output untouched unless it is overridden by some rule.
 
 For example, if your metric naming scheme is:
 
@@ -175,6 +177,10 @@ As an example, if the following metrics are received:
 They would all go into the same aggregation buffer and after 60 seconds the
 aggregate metric 'prod.applications.apache.all.requests' would be calculated
 by summing their values.
+
+Another common use pattern of ``carbon-aggregator`` is to aggregate several data points
+of the *same metric*. This could come in handy when you have got the same metric coming from
+several hosts, or when you are bound to send data more frequently than your shortest retention.
 
 whitelist and blacklist
 -----------------------

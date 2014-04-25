@@ -1,11 +1,20 @@
 Tools That Work With Graphite
 =============================
 
+Backstop
+--------
+`Backstop`_ is a simple endpoint for submitting metrics to Graphite. It accepts JSON data via HTTP POST and proxies the data to one or more Carbon/Graphite listeners.
+
 Bucky
 -----
 `Bucky`_ is a small service implemented in Python for collecting and translating metrics for Graphite.
 It can current collect metric data from CollectD daemons and from StatsD clients.
 
+Cabot
+-----
+`Cabot`_ is a self-hosted monitoring and alerting server that watches Graphite metrics and can alert 
+on them by phone, SMS, Hipchat or email. It is designed to be deployed to cloud or physical hardware in 
+minutes and configured via web interface.
 
 collectd
 --------
@@ -38,6 +47,9 @@ Charcoal
 service which can generate images directly from a URL. Charcoal configuration is driven by a YAML
 config file.
 
+Descartes
+---------
+`Descartes`_ is a Sinatra-based dashboard that allows users to correlate multiple metrics in a single chart, review long-term trends across one or more charts, and to collaborate with other users through a combination of shared dashboards and rich layouts.
 
 Diamond
 -------
@@ -45,6 +57,17 @@ Diamond
 capable of collecting cpu, memory, network, I/O, load and disk metrics. Additionally, it features
 an API for implementing custom collectors for gathering metrics from almost any source.
 
+Dusk
+----
+`Dusk`_ is a simple dashboard for isolating "hotspots" across a fleet of systems. It incorporates horizon charts using Cubism.js to maximize data visualization in a constrained space.
+
+Evenflow
+--------
+`Evenflow`_ is a simple service for submitting sFlow datagrams to Graphite. It accepts sFlow datagrams from multiple network devices and proxies the data to a Carbon listener. Currently only Generic Interface Counters are supported. All other message types are discarded.
+
+Firefly
+-------
+`Firefly`_ is a web application aimed at powerful, flexible time series graphing for web developers.
 
 Ganglia
 -------
@@ -60,11 +83,57 @@ GDash
 `Gdash`_ is a simple Graphite dashboard built using Twitters Bootstrap driven by a small DSL.
 
 
+Giraffe
+-------
+`Giraffe`_ is a Graphite real-time dashboard based on `Rickshaw`_ and requires no server backend.
+Inspired by `Gdash`_, `Tasseo`_ and `Graphene`_ it mixes features from all three into a slightly
+different animal.
+
+Grafana
+-------
+`Grafana`_ is general purpose graphite dashboard replacement with feature rich graph editing and dashboard creation interface.
+It contains a unique Graphite target parser that enables easy metric and function editing. Fast client side rendering (even over large time ranges)
+using Flot with a multitude of display options (Multiple Y-axis, Bars, Lines, Points, smart Y-axis formats and much more).
+Click and drag selection rectangle to zoom in on any graph.
+
+Graphitus
+---------
+`graphitus`_ is a client side dashboard for graphite built using bootstrap and underscore.js.
+
+
+Graph-Explorer
+--------------
+`Graph-Explorer`_ is a graphite dashboard which uses plugins to add tags and metadata
+to metrics and a query language with lets you filter through them and
+compose/manipulate graphs on the fly. Also aims for high interactivity using
+`TimeseriesWidget`_ and minimal hassle to set up and get running.
+
+
+Graph-Index
+--------------
+`Graph-Index`_ is index of graphs for `Diamond`_
+
+
 Graphene
 --------
 `Graphene`_ is a Graphite dashboard toolkit based on `D3.js`_ and `Backbone.js`_ which was
 made to offer a very aesthetic realtime dashboard. Graphene provides a solution capable of
 displaying thousands upon thousands of datapoints all updated in realtime.
+
+
+Graphite-Newrelic
+-----------------
+`Graphite-Newrelic`_ - Get your graphite data into `New Relic`_ via a New Relic Platform plugin.
+
+
+Graphite-Observer
+-----------------
+`Graphite-Observer`_ is a real-time monitor dashboard for Graphite.
+
+Graphite PowerShell Functions
+-----------------------------
+`Graphite PowerShell Functions <https://github.com/MattHodge/Graphite-PowerShell-Functions>`_ are a group of functions that can be used to collect Windows Performance Counters and send them over to the Graphite server. The main function can be run as a Windows service, and everything is configurable via an XML file.
+
 
 
 Graphite-relay
@@ -94,10 +163,13 @@ Graphios
 `Graphios`_ is a small Python daemon to send Nagios performance data (perfdata) to Graphite.
 
 
-Graphitejs
-----------
-`Graphitejs`_ is a jQuery plugin for easily making and displaying graphs and updating them on
-the fly using the Graphite URL api.
+Graphsky
+--------
+`Graphsky`_ is flexible and easy to configure PHP based dashboard. It uses JSON template files to
+build graphs and specify which graphs need to be displayed when, similar to Ganglia-web. Just 
+like Ganglia, it uses a hierarchial structure: Environment/Cluster/Host/Metric to be able to display
+overview graphs and host-specific metrics. It communicates directly to the Graphite API to determine
+which Environments, Clusters, Hosts and Metrics are currently stored in Graphite.
 
 
 Grockets
@@ -127,11 +199,22 @@ hubot-scripts
 project includes a Graphite script which supports searching and displaying saved graphs from
 the Composer directory in your Campfire rooms.
 
+
 jmxtrans
 --------
 `jmxtrans`_ is a powerful tool that performs JMX queries to collect metrics from Java applications.
 It is requires very little configuration and is capable of sending metric data to several
 backend applications, including Graphite.
+
+
+Ledbetter
+---------
+`Ledbetter`_ is a simple script for gathering Nagios problem statistics and submitting them to Graphite. It focuses on summary (overall, servicegroup and hostgroup) statistics and writes them to the nagios.problems metrics namespace within Graphite.
+
+Leonardo
+--------
+`Leonardo`_ is a Graphite dashboard inspired by Gdash. It's written in Python using the Flask framework. 
+The interface is built with Bootstrap. The graphs and dashboards are configured through the YAML files.
 
 
 Logster
@@ -142,10 +225,33 @@ logs. For example, you might use logster to graph the number of occurrences of H
 code that appears in your web server logs.
 
 
+Orion
+-------
+`Orion`_ is powerful tool to create, view and manage dashboards for your Graphite data. It allows easy implementation of custom authentication to manage access to the dashboard.
+
+
+metrics-sampler
+---------------
+`metrics-sampler`_ is a java program which regularly queries metrics from a configured set of inputs, 
+selects and renames them using regular expressions and sends them to a configured set of outputs. 
+It supports JMX and JDBC as inputs and Graphite as output out of the box.
+
+
 Pencil
 ------
 `Pencil`_ is a monitoring frontend for graphite. It runs a webserver that dishes out pretty Graphite
 URLs in interesting and intuitive layouts.
+
+
+pipe-to-graphite
+----------------
+`pipe-to-graphite`_ is a small shell script that makes it easy to report the
+output of any other cli program to Graphite.
+
+
+rearview
+--------
+`rearview`_ is a real-time monitoring framework that sits on top of Graphite's time series data. This allows users to create monitors that both visualize and alert on data as it streams from Graphite. The monitors themselves are simple Ruby scripts which run in a sandbox to provide additional security. Monitors are also configured with a crontab compatible time specification used by the scheduler. Alerts can be sent via email, pagerduty, or campfire.
 
 
 Rocksteady
@@ -155,13 +261,12 @@ AdMob (who was then bought by Google), this was released by Google as open sourc
 (http://google-opensource.blogspot.com/2010/09/get-ready-to-rocksteady.html).
 
 
-Scales
-------
-`Scales`_ is a Python server state and statistics library that can output its data to Graphite.
-
+Sensu
+-----
+`Sensu`_ is a monitoring framework that can route metrics to Graphite. Servers subscribe to sets of checks, so getting metrics from a new server to Graphite is as simple as installing the Sensu client and subscribing.
 
 Seyren
----------------
+------
 `Seyren`_ is an alerting dashboard for Graphite.
 
 
@@ -171,49 +276,91 @@ Shinken
 and ease of setup. Shinken provides complete integration with Graphite for processing and display of
 performance data.
 
+SqlToGraphite
+-------------
+`SqlToGraphite`_ is an agent for windows written in .net to collect metrics using plugins (WMI, SQL Server, Oracle) by polling an endpoint with a SQL query and pushing the results into graphite. It uses either a local or a centralised configuration over HTTP. 
+
+SSC Serv
+--------
+`SSC Serv`_ is a Windows service (agent) which periodically publishes system metrics, for example CPU, memory and disk usage. It can store data in Graphite using a naming schema that's identical to that used by collectd.
 
 statsd
 ------
 `statsd`_ is a simple daemon for easy stats aggregation, developed by the folks at Etsy.
 A list of forks and alternative implementations can be found at <http://joemiller.me/2011/09/21/list-of-statsd-server-implementations/>
 
-
 Tasseo
 ------
 `Tasseo`_ is a lightweight, easily configurable, real-time dashboard for Graphite metrics.
 
-.. _Diamond: http://opensource.brightcove.com/project/Diamond/
-.. _jmxtrans: http://code.google.com/p/jmxtrans/
-.. _statsd: https://github.com/etsy/statsd
-.. _Ganglia: http://ganglia.info/
+Therry
+------
+`Therry`_ ia s simple web service that caches Graphite metrics and exposes an endpoint for dumping or searching against them by substring.
+
+TimeseriesWidget
+----------------
+`TimeseriesWidget`_ adds timeseries graphs to your webpages/dashboards using a simple api,
+focuses on high interactivity and modern features (realtime zooming, datapoint inspection,
+annotated events, etc). Supports Graphite, flot, rickshaw and anthracite.
+
 .. _Backbone.js: http://documentcloud.github.com/backbone/
+.. _Backstop: https://github.com/obfuscurity/backstop
+.. _Bucky: http://pypi.python.org/pypi/bucky
+.. _Cabot: https://github.com/arachnys/cabot
+.. _Charcoal: https://github.com/cebailey59/charcoal
 .. _collectd: http://collectd.org/
-.. _collectd-to-graphite: https://github.com/loggly/collectd-to-graphite
 .. _collectd-carbon: https://github.com/indygreg/collectd-carbon
 .. _collectd-graphite: https://github.com/joemiller/collectd-graphite
+.. _collectd-to-graphite: https://github.com/loggly/collectd-to-graphite
 .. _Collectl: http://collectl.sourceforge.net/
 .. _D3.js: http://mbostock.github.com/d3/
-.. _Logster: https://github.com/etsy/logster
-.. _RabbitMQ: http://www.rabbitmq.com/
+.. _Descartes: https://github.com/obfuscurity/descartes
+.. _Diamond: http://opensource.brightcove.com/project/Diamond/
+.. _Dusk: https://github.com/obfuscurity/dusk
 .. _Esper: http://esper.codehaus.org/
-.. _Rocksteady: http://code.google.com/p/rocksteady/
-.. _Bucky: http://pypi.python.org/pypi/bucky
-.. _Graphite-Tattle: https://github.com/wayfair/Graphite-Tattle
+.. _Evenflow: https://github.com/github/evenflow
+.. _Firefly: https://github.com/Yelp/firefly
+.. _Ganglia: http://ganglia.info/
 .. _Gdash: https://github.com/ripienaar/gdash.git
-.. _Pencil: https://github.com/fetep/pencil
+.. _Giraffe: http://kenhub.github.com/giraffe/
+.. _Grafana: http://grafana.org/
+.. _Graph-Explorer: http://vimeo.github.io/graph-explorer
+.. _Graph-Index: https://github.com/douban/graph-index
 .. _Graphene: http://jondot.github.com/graphene/
+.. _Graphios: https://github.com/shawn-sterling/graphios
+.. _Graphite-Tattle: https://github.com/wayfair/Graphite-Tattle
+.. _Graphite-Newrelic: https://github.com/gingerlime/graphite-newrelic
+.. _Graphite-Observer: https://github.com/huoxy/graphite-observer
 .. _Graphite-relay: https://github.com/markchadwick/graphite-relay
 .. _Graphiti: https://github.com/paperlesspost/graphiti
-.. _Graphios: https://github.com/shawn-sterling/graphios
-.. _Charcoal: https://github.com/cebailey59/charcoal
-.. _Graphitejs: https://github.com/prestontimmons/graphitejs
-.. _Grockets: https://github.com/disqus/grockets
-.. _Host sFlow: http://host-sflow.sourceforge.net/
+.. _graphitius: https://github.com/erezmazor/graphitus
 .. _Graphitoid: https://market.android.com/details?id=com.tnc.android.graphite
+.. _Graphsky: https://github.com/hyves-org/graphsky
+.. _Grockets: https://github.com/disqus/grockets
 .. _HoardD: https://github.com/coredump/hoardd
+.. _Host sFlow: http://host-sflow.sourceforge.net/
 .. _Hubot: https://github.com/github/hubot
 .. _hubot-scripts: https://github.com/github/hubot-scripts
-.. _Tasseo: https://github.com/obfuscurity/tasseo
-.. _Shinken: http://www.shinken-monitoring.org/
+.. _jmxtrans: http://code.google.com/p/jmxtrans/
+.. _Ledbetter: https://github.com/github/ledbetter
+.. _Leonardo: https://github.com/PrFalken/leonardo
+.. _Logster: https://github.com/etsy/logster
+.. _Orion: https://github.com/gree/Orion
+.. _metrics-sampler: https://github.com/dimovelev/metrics-sampler
+.. _New Relic: https://newrelic.com/platform
+.. _Pencil: https://github.com/fetep/pencil
+.. _pipe-to-graphite: https://github.com/iFixit/pipe-to-graphite
+.. _RabbitMQ: http://www.rabbitmq.com/
+.. _Rickshaw: http://code.shutterstock.com/rickshaw/
+.. _rearview: http://github.com/livingsocial/rearview/
+.. _Rocksteady: http://code.google.com/p/rocksteady/
 .. _Seyren: https://github.com/scobal/seyren
+.. _Sensu: http://sensuapp.org/
+.. _Shinken: http://www.shinken-monitoring.org/
+.. _SqlToGraphite: https://github.com/perryofpeek/SqlToGraphite/
+.. _SSC Serv: https://ssc-serv.com/
+.. _statsd: https://github.com/etsy/statsd
+.. _Tasseo: https://github.com/obfuscurity/tasseo
+.. _Therry: https://github.com/obfuscurity/therry
+.. _TimeseriesWidget: https://github.com/Dieterbe/timeserieswidget
 .. _write-graphite: http://collectd.org/wiki/index.php/Plugin:Write_Graphite

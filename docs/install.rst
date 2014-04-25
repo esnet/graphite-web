@@ -10,7 +10,7 @@ been met or not.
 
 Basic Graphite requirements:
 
-* Python 2.4 or greater (2.6+ recommended)
+* Python 2.5 or greater (2.6+ recommended)
 * `Pycairo`_
 * `Django`_ 1.0 or greater
 * `django-tagging`_ 0.3.1 or greater
@@ -18,11 +18,11 @@ Basic Graphite requirements:
 * `zope-interface`_ (often included in Twisted package dependency)
 * `fontconfig`_ and at least one font package (a system package usually)
 * A WSGI server and web server. Popular choices are:
-  - `Apache`_ with `mod_wsgi`_ and `mod_python`_
+  - `Apache`_ with `mod_wsgi`_
   - `gunicorn`_ with `nginx`_
   - `uWSGI`_ with `nginx`_
 
-Python 2.4 and 2.5 have extra requirements:
+Python 2.5 has extra requirements:
 
 * `simplejson`_
 * `python-sqlite2`_ or another Django-supported database module
@@ -48,7 +48,7 @@ There are also several other dependencies required for additional features:
 Fulfilling Dependencies
 -----------------------
 Most current Linux distributions have all of the requirements available in the base packages.
-RHEL based distributions may require the `EPEL`_ repository for requirements. 
+RHEL based distributions may require the `EPEL`_ repository for requirements.
 Python module dependencies can be install with `pip`_ rather than system packages if desired or if using
 a Python version that differs from the system default. Some modules (such as Cairo) may require
 library development headers to be available.
@@ -95,7 +95,7 @@ Carbon and Graphite-web are installed in ``/opt/graphite/`` with the following l
 
   - ``graphite/``
 
-    Location of ``manage.py`` and ``local_settings.py``
+    Location of ``local_settings.py``
 
   - ``content/``
 
@@ -115,8 +115,9 @@ Several installation options exist:
 Initial Configuration
 ---------------------
 .. toctree::
-   configure-webapp
-   configure-carbon
+
+   config-webapp
+   config-carbon
 
 
 Help! It didn't work!
@@ -159,7 +160,6 @@ Post-Install Tasks
 .. _fontconfig: http://www.freedesktop.org/wiki/Software/fontconfig/
 .. _gunicorn: http://gunicorn.org/
 .. _memcached: http://memcached.org/
-.. _mod_python: http://www.modpython.org/
 .. _mod_wsgi: http://code.google.com/p/modwsgi/
 .. _nginx: http://nginx.org/
 .. _pip: http://www.pip-installer.org/
