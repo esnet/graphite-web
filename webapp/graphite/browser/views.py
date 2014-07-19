@@ -14,12 +14,12 @@ limitations under the License."""
 
 import re
 from django.shortcuts import render_to_response
-from django.http import HttpResponse
 from django.conf import settings
 from graphite.account.models import Profile
-from graphite.util import getProfile, getProfileByUsername, defaultUser, json
+from graphite.compat import HttpResponse
+from graphite.util import getProfile, getProfileByUsername, json
 from graphite.logger import log
-import hashlib
+from hashlib import md5
 
 try:
   import cPickle as pickle
@@ -47,11 +47,11 @@ def browser(request):
     context['queryString'] = context['queryString'].replace('#','%23')
   if context['target']:
     context['target'] = context['target'].replace('#','%23') #js libs terminate a querystring on #
-  return render_to_response("browser.html", context) 
+  return render_to_response("browser.html", context)
 
 
 def search(request):
-  query = request.POST['query']
+  query = request.POST.get('query')
   if not query:
     return HttpResponse("")
 
@@ -74,7 +74,7 @@ def search(request):
 
   index_file.close()
   result_string = ','.join(results)
-  return HttpResponse(result_string, mimetype='text/plain')
+  return HttpResponse(result_string, content_type='text/plain')
 
 
 def myGraphLookup(request):
@@ -135,10 +135,9 @@ def myGraphLookup(request):
         node.update(branchNode)
 
       else:
-        m = hashlib.md5()
+        m = md5()
         m.update(name)
-        md5 = m.hexdigest() 
-        node.update( { 'id' : str(userpath_prefix + md5), 'graphUrl' : str(graph.url) } )
+        node.update( { 'id' : str(userpath_prefix + m.hexdigest()), 'graphUrl' : str(graph.url) } )
         node.update(leafNode)
 
       nodes.append(node)
@@ -182,7 +181,7 @@ def userGraphLookup(request):
   try:
 
     if not username:
-      profiles = Profile.objects.exclude(user=defaultUser)
+      profiles = Profile.objects.exclude(user__username='default')
 
       for profile in profiles:
         if profile.mygraph_set.count():
@@ -221,13 +220,12 @@ def userGraphLookup(request):
           }
           node.update(branchNode)
         else: # leaf
-          m = hashlib.md5()
+          m = md5()
           m.update(nodeName)
-          md5 = m.hexdigest() 
 
           node = {
             'text' : str(nodeName ),
-            'id' : str(username + '.' + prefix + md5),
+            'id' : str(username + '.' + prefix + m.hexdigest()),
             'graphUrl' : str(graph.url),
           }
           node.update(leafNode)
@@ -253,16 +251,10 @@ def json_response(nodes, request=None):
   #json = str(nodes) #poor man's json encoder for simple types
   json_data = json.dumps(nodes)
   if jsonp:
-    response = HttpResponse("%s(%s)" % (jsonp, json_data),mimetype="text/javascript")
+    response = HttpResponse("%s(%s)" % (jsonp, json_data),
+                            content_type="text/javascript")
   else:
-    response = HttpResponse(json_data,mimetype="application/json")
+    response = HttpResponse(json_data, content_type="application/json")
   response['Pragma'] = 'no-cache'
   response['Cache-Control'] = 'no-cache'
   return response
-
-
-def any(iterable): #python2.4 compatibility
-  for i in iterable:
-    if i:
-      return True
-  return False

@@ -1,8 +1,10 @@
+[![Build Status](https://travis-ci.org/graphite-project/graphite-web.png?branch=master)](https://travis-ci.org/graphite-project/graphite-web)
+
 ## Overview
 
-Graphite consists of two major components
+Graphite consists of two major components:
 
-1. the frontend Django webapp that runs under mod_python Apache
+1. the frontend Django webapp that runs under Apache/mod_wsgi
 2. the backend carbon-cache.py daemon
 
 Client applications connect to the running carbon-cache.py daemon on port 2003 and send it
@@ -14,9 +16,9 @@ For example:
 
     performance.servers.www01.cpuUsage 42.5 1208815315
 
-The metric name is like a filesystem path that uses . as a separator instead of /
-The value is some scalar integer or floating point value
-The unix_timestamp is unix epoch time, as an integer
+The metric name is like a filesystem path that uses `.` as a separator instead of `/`.
+The value is some scalar integer or floating point value.
+The unix_timestamp is unix epoch time, as an integer.
 
 Each line like this corresponds to one data point for one metric.
 
@@ -46,4 +48,4 @@ that sends loadavg data for your local machine to carbon on a minutely basis.
 
 The default storage schema stores data in one-minute intervals for 2 hours.
 This is probably not what you want so you should create a custom storage schema
-according to the docs on the graphite wiki (http://graphite.wikidot.com)
+according to the docs on the graphite wiki (http://graphite.readthedocs.org/).

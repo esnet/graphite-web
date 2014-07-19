@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 # Django settings for graphite project.
 # DO NOT MODIFY THIS FILE DIRECTLY - use local_settings.py instead
-from django import VERSION as DJANGO_VERSION
 from os.path import dirname, join, abspath
 
 ADMINS = ()
@@ -26,7 +25,11 @@ TEMPLATE_DIRS = (
 #Django settings below, do not touch!
 APPEND_SLASH = False
 TEMPLATE_DEBUG = False
-CACHE_BACKEND = "dummy:///"
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    },
+}
 
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
@@ -48,27 +51,18 @@ MEDIA_URL = ''
 # Examples: "http://foo.com/media/", "/media/".
 ADMIN_MEDIA_PREFIX = '/media/'
 
-# Make this unique, and don't share it with anybody.
-SECRET_KEY = ''
-
 # List of callables that know how to import templates from various sources.
-#XXX Compatibility for Django 1.1. To be removed after 0.9.10
-if DJANGO_VERSION < (1,2):
-  TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
-  )
-else:
-  TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-  )
+TEMPLATE_LOADERS = (
+  'django.template.loaders.filesystem.Loader',
+  'django.template.loaders.app_directories.Loader',
+)
 
 MIDDLEWARE_CLASSES = (
   'django.middleware.common.CommonMiddleware',
   'django.middleware.gzip.GZipMiddleware',
   'django.contrib.sessions.middleware.SessionMiddleware',
   'django.contrib.auth.middleware.AuthenticationMiddleware',
+  'django.contrib.messages.middleware.MessageMiddleware',
 )
 
 ROOT_URLCONF = 'graphite.urls'
@@ -92,4 +86,4 @@ INSTALLED_APPS = (
 
 AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend']
 
-_APP_SETTINGS_LOADED = True
+GRAPHITE_WEB_APP_SETTINGS_LOADED = True
