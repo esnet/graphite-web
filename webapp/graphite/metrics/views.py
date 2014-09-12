@@ -278,9 +278,14 @@ def tree_json(nodes, base_path, wildcards=False):
     if node.name in found:
       continue
 
+    if hasattr(node, 'label'):
+      text = str(node.label)
+    else:
+      text = str(node.name)
+
     found.add(node.name)
     resultNode = {
-      'text' : str(node.name),
+      'text' : text,
       'id' : base_path + str(node.name),
     }
 
