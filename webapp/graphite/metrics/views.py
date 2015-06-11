@@ -286,7 +286,7 @@ def tree_json(nodes, base_path, wildcards=False):
     found.add(node.name)
     resultNode = {
       'text' : text,
-      'id' : base_path + str(node.name),
+      'id' : node.metric_path,
     }
 
     if node.is_leaf:
